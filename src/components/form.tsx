@@ -16,14 +16,16 @@ const emailDataSchema = z.object({
 
 type EmailDataType = z.infer<typeof emailDataSchema>;
 
+const emailMock = {
+	name: "",
+	email: "",
+	subject: "",
+	message: "",
+};
+
 export default function Form() {
 	const { mutateAsync: sendEmail, isPending, isError, isSuccess } = useEmail();
-	const [email, setEmail] = useState<EmailDataType>({
-		name: "",
-		email: "",
-		subject: "",
-		message: "",
-	});
+	const [email, setEmail] = useState<EmailDataType>(emailMock);
 
 	function handleChange(e: ChangeEvent<HTMLInputElement>) {
 		const { name, value } = e.target;
@@ -37,6 +39,8 @@ export default function Form() {
 		if (isError) alert("Erro ao enviar o email");
 
 		if (isSuccess) alert(response.ok);
+
+		setEmail(emailMock);
 	}
 
 	return (
