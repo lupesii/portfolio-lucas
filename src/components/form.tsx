@@ -1,13 +1,42 @@
-import type { FormEvent } from "react";
+import { LoaderCircle } from "lucide-react";
+import { type ChangeEvent, type FormEvent, useState } from "react";
+import z from "zod";
 import SendIcon from "../assets/icons/send.svg?react";
+import { useEmail } from "../hooks/use-email";
 import Icon from "./icon";
 import InputBox from "./input-box";
 import Text from "./text";
 
+const emailDataSchema = z.object({
+	name: z.string().max(30),
+	email: z.email(),
+	subject: z.string().max(50),
+	message: z.string().max(250),
+});
+
+type EmailDataType = z.infer<typeof emailDataSchema>;
+
 export default function Form() {
-	function handleSubmitForm(e: FormEvent<HTMLFormElement>) {
+	const { mutateAsync: sendEmail, isPending, isError, isSuccess } = useEmail();
+	const [email, setEmail] = useState<EmailDataType>({
+		name: "",
+		email: "",
+		subject: "",
+		message: "",
+	});
+
+	function handleChange(e: ChangeEvent<HTMLInputElement>) {
+		const { name, value } = e.target;
+		setEmail((prev) => ({ ...prev, [name]: value }));
+	}
+
+	async function handleSubmitForm(e: FormEvent<HTMLFormElement>) {
 		e.preventDefault();
-		alert("Calma, falta programar");
+		const response = await sendEmail(email);
+
+		if (isError) alert("Erro ao enviar o email");
+
+		if (isSuccess) alert(response.ok);
 	}
 
 	return (
@@ -20,28 +49,59 @@ export default function Form() {
 			</Text>
 
 			<div className="flex flex-col md:flex-row items-center gap-5">
-				<InputBox id="Name" placeholder="Your Name" className="w-full" />
 				<InputBox
+					id="Name"
+					name="name"
+					value={email.name}
+					onChange={handleChange}
+					placeholder="Your Name"
+					className="w-full"
+					required
+				/>
+				<InputBox
+					type="email"
 					id="Email"
+					name="email"
+					value={email.email}
+					onChange={handleChange}
 					placeholder="Your email address"
 					className="w-full"
+					required
 				/>
 			</div>
-			<InputBox id="Subject" placeholder="Subject of your message" />
+			<InputBox
+				id="Subject"
+				name="subject"
+				value={email.subject}
+				onChange={handleChange}
+				placeholder="Subject of your message"
+				required
+			/>
 			<InputBox
 				as="textarea"
 				id="Message"
+				name="message"
+				value={email.message}
+				onChange={handleChange}
 				placeholder="What I can help you with?"
+				required
 			/>
 
 			<button
 				type="submit"
 				className="flex items-center justify-center gap-3 bg-azul w-full p-5 rounded-5"
 			>
-				<Icon svg={SendIcon} />
-				<Text variant="anony-sm" bold>
-					Send Message
-				</Text>
+				{!isPending && (
+					<>
+						{" "}
+						<Icon svg={SendIcon} />
+						<Text variant="anony-sm" bold>
+							Send Message
+						</Text>
+					</>
+				)}
+
+				{isPending && <LoaderCircle className="animate-spin" color="white" />}
 			</button>
 		</form>
 	);
